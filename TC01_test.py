@@ -17,6 +17,13 @@ def setup(request):
     yield driver
     driver.quit()  # Ensures driver quits after tests
 
+@pytest.fixture()
+def login_data():
+    """Fixture to provide dynamic login data"""
+    phone_input = input("Enter the login (e.g., phone number or username): ")
+    password_input = getpass.getpass("Enter the password: ")
+    return phone_input, password_input
+
 @pytest.mark.usefixtures("setup")
 class TestComponents:
     URL = "https://www.siloamhospitals.com/"
@@ -27,7 +34,7 @@ class TestComponents:
         self.driver.get(self.URL)
     
     def test_check_navbar(self):
-        navbar = self.driver.find_element(By.XPATH, '//*[@id="navbar"]/div/div[1]/nav')
+        navbar = self.driver.find_element(By.XPATH, '//*[@id="navbar"]/div/div[1]/nav/div[1]')
         assert navbar.is_displayed(), "Navbar is not displayed"
 
     def test_pasien_pengunjung_button(self):
@@ -96,31 +103,24 @@ class TestComponents:
         
         wait = WebDriverWait(self.driver, 10)
         login_field = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="loginPhone"]/fieldset/div[1]/input')))
-        assert login_field.is_displayed(), "Login field is not displayed after clicking the button"
         login_field.send_keys(phone_input)
-        login_button = self.driver.find_element(By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/button')
-        login_button.click()
+        next_button = self.driver.find_element(By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/button')
+        next_button.click()
         
         password_field = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/div[2]/div[2]/div/div[1]/fieldset/div/input')))
-        assert password_field.is_displayed()
         password_field.send_keys(password_input)
-        password_button = self.driver.find_element(By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/div[2]/div[3]/button')
-        password_button.click()
-
-        image_siloam = self.driver.find_element(By.XPATH, '//*[@id="logo"]/img')
-        assert image_siloam.is_displayed()
+        submit_button = self.driver.find_element(By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/div[2]/div[3]/button')
+        submit_button.click()
+        
+        # Verify login success by checking the homepage logo
+        image_siloam = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="logo"]/img')))
+        assert image_siloam.is_displayed(), "Homepage logo not displayed after login"
 
     def test_responsive(self):
         """Tests tablet responsiveness by resizing the window."""
-        self.driver.set_window_rect(0, 0, 768, 1024)
-        assert self.driver.execute_script("return window.innerWidth <= 768"), "Tablet view failed"
-
-@pytest.fixture()
-def login_data():
-    """Fixture to provide dynamic login data"""
-    phone_input = input("Enter the login (e.g., phone number or username): ")
-    password_input = getpass.getpass("Enter the password: ") 
-    return phone_input, password_input
+        self.driver.set_window_size(768, 1024)
+        assert self.driver.execute_script("return window.innerWidth") <= 768, "Tablet view width check failed"
+        # Additional checks for responsive elements can be added here
 
 if __name__ == "__main__":
     report_dir = os.path.abspath("test_reports")
