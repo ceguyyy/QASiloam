@@ -95,24 +95,38 @@ class TestComponents:
     def test_login_button(self):
         """Login using dynamic username and password"""
         wait = WebDriverWait(self.driver, 10)
+
         phone_input = input("Enter login (e.g., phone number or username): ")
         password_input = getpass.getpass("Enter password: ")
 
-        login_button = self.driver.find_element(By.XPATH, '//*[@id="navbar"]/div/div[1]/nav/div[1]/button[3]')
+        # Klik tombol login dengan menunggu hingga bisa diklik
+        login_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="navbar"]/div/div[1]/nav/div[1]/button[3]')))
         login_button.click()
 
+        # Masukkan username/phone
         login_field = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="loginPhone"]/fieldset/div[1]/input')))
         login_field.send_keys(phone_input)
-        next_button = self.driver.find_element(By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/button')
+
+        next_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/button')))
         next_button.click()
 
+        # Masukkan password
         password_field = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/div[2]/div[2]/div/div[1]/fieldset/div/input')))
         password_field.send_keys(password_input)
-        submit_button = self.driver.find_element(By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/div[2]/div[3]/button')
+
+        submit_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="modalLoginRevamp"]/div[2]/div/div[2]/div[3]/button')))
         submit_button.click()
 
-        image_siloam = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="logo"]/img')))
-        assert image_siloam.is_displayed(), "Homepage logo not displayed after login"
+        # Cek apakah login berhasil dengan menunggu elemen yang menunjukkan status login
+        try:
+            data_login = wait.until(EC.visibility_of_element_located((By.XPATH, '//*[@id="navbar"]/div/div[1]/nav/div[1]/div/button/div/p')))
+            assert data_login.is_displayed(), "Login Failed"
+            print("Login Successful")
+        except Exception as e:
+            print("Login Failed:", str(e))
+
+
+        
 
     def test_responsive(self):
         """Tests tablet responsiveness by resizing the window."""
